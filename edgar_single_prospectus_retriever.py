@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 import requests
 
 from prospectus_retriever import ProspectusLog, ProspectusRetriever
@@ -7,34 +8,40 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
     def __init__(self, api_key):
         super().__init__()
         self._api_key = api_key
-        self.symbol_to_cik = {}
+        self.symbol_to_seriesID = {}
         self._process_mappings()
 
     def _process_mappings(self) -> None:
         """ preprocess mappings to make look up easier """
 
         with open("company_tickers_mf.json", "r") as f:
-            cik_mapping = json.loads(f.read())["data"]
-            for [cik,seriesId,classId,symbol] in cik_mapping:
-                self.symbol_to_cik[symbol] = cik
+            seriesId_mapping = json.loads(f.read())["data"]
+            for [cik,seriesId,classId,symbol] in seriesId_mapping:
+                self.symbol_to_seriesID[symbol] = seriesId
 
-    def _get_cik(self, fund_symbol: str) -> str:
+    def _get_seriesID(self, fund_symbol: str) -> str:
         """ Fail if symbol is not found """
         # TODO offer closest symbol
-        if fund_symbol in self.symbol_to_cik:
-            return self.symbol_to_cik[fund_symbol]
+        if fund_symbol in self.symbol_to_seriesID:
+            return self.symbol_to_seriesID[fund_symbol]
         raise LookupError("Fund Not Found")
     
     def set_api_key(self, api_key: str):
         self._api_key = api_key
 
-    def _retrieve_prospectus_data(self, cik: str, start=0, size=1):
-        """ retrieve filing data """
+    def _retrieve_prospectus_data(self, seriesID: Optional[str] = None, ticker: Optional[str] = None, start=0, size=1):
+        """ retrieve filing data either by seriesID or ticker """
 
         api_url = "https://api.sec-api.io"  
 
+        query = ""
+        if seriesID:
+            query = f"formType:\"497K\" AND seriesAndClassesContractsInformation.series:{seriesID}"
+        else:
+            query = f"formType:\"497\" AND ticker:({ticker})"
+
         payload = {
-            "query": f"formType:\"497K\" AND cik:{cik}",  
+            "query": query,  
             "from": start,
             "size": size,
             "sort": [{ "filedAt": { "order": "desc" }}]
@@ -84,8 +91,11 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
         print(f"[INFO] Processing fund: {fund_symbol}")
 
         try:
-            cik = self._get_cik(fund_symbol)
-            res, url, date = self._retrieve_prospectus_data(cik)
+            if fund_symbol in self.symbol_to_seriesID:
+                seriesID = self._get_seriesID(fund_symbol)
+                res, url, date = self._retrieve_prospectus_data(seriesID=seriesID)
+            else:
+                res, url, date = self._retrieve_prospectus_data(ticker=fund_symbol)
         except Exception as e:
             print(f"An error occurred during retrieval: {e}")
             return {
@@ -142,8 +152,11 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
         print(f"[INFO] Processing fund: {fund_symbol}")
 
         try:
-            cik = self._get_cik(fund_symbol)
-            res, url, date = self._retrieve_prospectus_data(cik)
+            if fund_symbol in self.symbol_to_seriesID:
+                seriesID = self._get_seriesID(fund_symbol)
+                res, url, date = self._retrieve_prospectus_data(seriesID=seriesID)
+            else:
+                res, url, date = self._retrieve_prospectus_data(ticker=fund_symbol)
         except Exception as e:
             print(f"An error occurred during retrieval: {e}")
             return {

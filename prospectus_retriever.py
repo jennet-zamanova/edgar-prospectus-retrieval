@@ -19,17 +19,17 @@ class ProspectusRetriever(ABC):
     @abstractmethod
     def retrieve_prospectus_as_pdf(self, fund_symbol: str, file_name: str) -> ProspectusLog:
         """
-        Retrieve latest prospectus (filed as 497K) for fund `fund_symbol` and
+        Retrieve latest prospectus (filed as 497K or 497) for fund `fund_symbol` and
         save as pdf file at `file_name`.
 
-        Returns None if completed successfully. Otherwise, returns the error raised.
+        Returns whether there was an error and whether the filing was successfully downloaded.
         """
         pass
 
     @abstractmethod
     def retrieve_prospectuses_as_pdfs(self, fund_symbols: list[str], file_names: list[str] = None) -> list[ProspectusLog]:
         """
-        Retrieve latest prospectuses (filed as 497K) for funds `fund_symbols` and
+        Retrieve latest prospectuses (filed as 497K or 497) for funds `fund_symbols` and
         save as pdf files at `file_names` where `fund_symbols[i]` latest prospectus 
         is saved at `file_names[i]` file for 0 <= i < len(file_names). 
 
@@ -58,7 +58,7 @@ class ProspectusRetriever(ABC):
         Retrieve latest prospectus filing details (filed as 497K) for fund `fund_symbol` and
         save as the available file at `file_name`.
 
-        Returns None if completed successfully. Otherwise, returns the error raised.
+        Returns whether there was an error and whether the filing was successfully downloaded.
         """
         pass
 

@@ -52,12 +52,22 @@ Resulting Logs:
 # Assumptions
 
 - Prospectus is filed under form 497K. 
-- If symbol is not available in the `company_tickers_mf.json` file then we assume fund does not exist.
-  - potential ways to improve: raise the error and give a list of funds that might match based on how close the input is to the available funds. 
 - There can be multiple prospectuses filed for a fund in a given time frame while another fund files only one. I.e. fund A filed at 2025-09-01, 2025-09-03, while fund B filed at 2025-08-28. This means pagination would not work since we would 2 prospectuses from A instead of 1 from A and 1 from B.
-- Log progress, errors, and final table wth fund + is_saved + error + filing link + filing date
+- Log progress, errors, and final table wth fund + is_saved + error + filing link (if downloaded wrong file can view everything at `Link` under Resulting Logs) + filing date
 - document date is `filedAt (string) - Represents the Accepted attribute of a filing in ISO 8601 format, and shows the date and time the filing was accepted by the EDGAR system.`
-
+- Not sure what's the difference between ticker and symbol in `company_tickers_mf.json` is considering SPY and QQQ by themselves are not available.
+    For example, 
+    ```
+        {
+            "query": "ticker:(SPY) AND formType:\"497\"",
+            "from": "0",
+            "size": "20",
+            "sort": [{ "filedAt": { "order": "desc" } }]
+        }
+    ``` 
+    returns `1/28/25, 9:39 AM | 497 | 884394 | SPY | SPDR S&P 500 ETF TRU...` but CIK `884394` is not available in `company_tickers_mf.json` neither is symbol `SPY`
+  - So, if symbol is not available in the `company_tickers_mf.json` file then we assume fund is ticker and try that, if returned data is empty assume fund does not exist.
+    - potential ways to improve: raise the error and give a list of funds that might match based on how close the input is to the available funds. 
 
 ## Design decisions
 
