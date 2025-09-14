@@ -5,6 +5,15 @@ from tabulate import tabulate
 
 from edgar_prospectus_retriever import EdgarProspectusRetriever
 
+def shorten(text: str, max_len: int = 40) -> str:
+    """Truncate long text with ellipsis."""
+    return text if len(text) <= max_len else text[:max_len-3] + "..."
+
+def hyperlink(label: str, url: str) -> str:
+    """Make a clickable ANSI hyperlink with truncated label."""
+    return f"\033]8;;{url}\033\\{label}\033]8;;\033\\"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Accept multiple fund symbols and filenames")
     parser.add_argument(
@@ -38,10 +47,10 @@ def main():
     # Print results as table
     headers = ["Fund Symbol", "Saved?", "Error", "Link", "Filing Date"]
     table = [
-        [r["fund_symbol"], r["is_successfully_saved"], r["error"] or "", r["url"] or "", r["date"] or ""] 
+        [r["fund_symbol"], r["is_successfully_saved"], r["error"] or "", hyperlink(shorten(r["url"] or "", 40), r["url"] or ""), r["date"] or ""] 
         for r in results
     ]
-    print("Logs: ")
+    print("Resulting Logs: ")
     print(tabulate(table, headers=headers, tablefmt="github"))
 
 

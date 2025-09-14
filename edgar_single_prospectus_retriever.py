@@ -47,8 +47,10 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
 
         response = requests.post(api_url, json=payload, headers=headers)
         response.raise_for_status()
-        res = response.json()  
-        return res
+        res = response.json()
+        url = res["filings"][0]["linkToHtml"]
+        date = res["filings"][0]["filedAt"]  
+        return res, url, date
 
 
     def _log_metadata(self, fund_symbol:str, filing_url:str, date):
@@ -79,12 +81,11 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
 
 
     def retrieve_prospectus(self, fund_symbol: str, file_name: str) -> ProspectusLog:
+        print(f"[INFO] Processing fund: {fund_symbol}")
+
         try:
             cik = self._get_cik(fund_symbol)
-            res = self._retrieve_prospectus_data(cik)
-            url = res["filings"][0]["linkToHtml"]
-            date = res["filings"][0]["filedAt"]
-            # self._log_metadata(fund_symbol, url, date)
+            res, url, date = self._retrieve_prospectus_data(cik)
         except Exception as e:
             print(f"An error occurred during retrieval: {e}")
             return {
@@ -96,7 +97,10 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
             }
         
         try:
+            print(f"[INFO] Downloading fund: {fund_symbol}")
             data = self._download_prospectus(res)
+            if not file_name.endswith(".htm"):
+                file_name += ".htm"
             with open(file_name, "wb") as f:
                 f.write(data)
             return {
@@ -135,15 +139,11 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
 
 
     def retrieve_prospectus_as_pdf(self, fund_symbol: str, file_name: str) -> ProspectusLog:
-        if not file_name.endswith(".pdf"):
-            file_name += ".pdf"
+        print(f"[INFO] Processing fund: {fund_symbol}")
 
         try:
             cik = self._get_cik(fund_symbol)
-            res = self._retrieve_prospectus_data(cik)
-            url = res["filings"][0]["linkToHtml"]
-            date = res["filings"][0]["filedAt"]
-            # self._log_metadata(fund_symbol, res["filings"][0]["linkToHtml"], res["filings"][0]["filedAt"])
+            res, url, date = self._retrieve_prospectus_data(cik)
         except Exception as e:
             print(f"An error occurred during retrieval: {e}")
             return {
@@ -155,7 +155,10 @@ class EdgarSingleProspectusRetriever(ProspectusRetriever):
             }
 
         try:
+            print(f"[INFO] Downloading fund: {fund_symbol}")
             data = self._download_prospectus_as_pdf(res["filings"][0]["linkToFilingDetails"])
+            if not file_name.endswith(".pdf"):
+                file_name += ".pdf"
             with open(file_name, "wb") as f:
                 f.write(data)
             return {
