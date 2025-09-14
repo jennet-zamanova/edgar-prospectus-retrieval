@@ -1,6 +1,8 @@
-# edgar-prospectus-retrieval
+# SEC EDGAR API to fetch the most recent prospectus
 
 # Setup
+
+[Optional] Create a virtual environment `python3 -m venv .venv`, activate `source .venv/bin/activate` progress in the virtual environment. 
 
 Install requirements:
 
